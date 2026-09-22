@@ -102,9 +102,8 @@ export default function HistoryScreen() {
                         style={styles.attendeeRow}
                       >
                         <Text style={styles.studentId}>
-                          {shortId(attendee.studentId)}
-                        </Text>
-
+  {attendee.studentName || shortId(attendee.studentId)}
+</Text>
                         <Text style={styles.scanTime}>
                           {formatDate(attendee.scannedAt)}
                         </Text>
@@ -251,6 +250,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: COLORS.textPrimary,
+  },
+
+  studentIdSecondary: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
 
   scanTime: {

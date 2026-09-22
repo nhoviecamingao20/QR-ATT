@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
 
   input: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: 14,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
 
   pickerField: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: 14,
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
 
   resultCard: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
+    borderRadius: 10,
     padding: 16,
     marginTop: 20,
     alignItems: "center",

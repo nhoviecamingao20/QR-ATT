@@ -23,9 +23,10 @@ export type TeacherEventAttendance = {
   endTime: string | null;
   attendeeCount: number;
   attendees: {
-    studentId: string;
-    scannedAt: string;
-  }[];
+  studentId: string;
+  studentName: string;
+  scannedAt: string;
+}[];
 };
 
 export type TeacherEventSummary = {
@@ -180,7 +181,8 @@ export async function getTeacherEventAttendance(
     return [];
   }
 
-  // Step 2: Get attendance for those events
+  // Step 2: Get attendance records
+  // Keep this separate from profiles so the count is not affected by profile RLS.
   const { data: attendance, error: attError } = await supabase
     .from("attendance")
     .select("student_id, scanned_at, event_id")
@@ -199,9 +201,37 @@ export async function getTeacherEventAttendance(
     }));
   }
 
-  // Step 3: Group attendance by event
+  // Step 3: Get the student IDs from the attendance records
+  const studentIds = [
+    ...new Set(
+      attendance.map((a: any) => a.student_id),
+    ),
+  ];
+
+  // Step 4: Get student names separately
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .in("id", studentIds);
+
+  // Step 5: Create a quick lookup for profiles
+  const profileMap: Record<
+    string,
+    { full_name: string | null; email: string | null }
+  > = {};
+
+  (profiles ?? []).forEach((profile: any) => {
+    profileMap[profile.id] = {
+      full_name: profile.full_name,
+      email: profile.email,
+    };
+  });
+
+  // Step 6: Group attendance by event
   return events.map((e: any) => {
-    const rows = attendance.filter((a: any) => a.event_id === e.id);
+    const rows = attendance.filter(
+      (a: any) => a.event_id === e.id,
+    );
 
     return {
       eventId: e.id,
@@ -210,62 +240,19 @@ export async function getTeacherEventAttendance(
       startTime: e.start_time,
       endTime: e.end_time,
       attendeeCount: rows.length,
-      attendees: rows.map((a: any) => ({
-        studentId: a.student_id,
-        scannedAt: a.scanned_at,
-      })),
+
+      attendees: rows.map((a: any) => {
+        const profile = profileMap[a.student_id];
+
+        return {
+          studentId: a.student_id,
+          studentName:
+            profile?.full_name ||
+            profile?.email ||
+            `…${a.student_id.slice(-8)}`,
+          scannedAt: a.scanned_at,
+        };
+      }),
     };
   });
-}
-
-export async function getTeacherEventSummary(
-  teacherId: string,
-): Promise<TeacherEventSummary[]> {
-  // Step 1: Get the teacher's events
-  const { data: events, error: eventError } = await supabase
-    .from("events")
-    .select("id, event_code, title")
-    .eq("created_by", teacherId)
-    .order("created_at", { ascending: false });
-
-  if (eventError || !events) {
-    return [];
-  }
-
-  const eventIds = events.map((e: any) => e.id);
-
-  // Step 2: No events → nothing to count
-  if (eventIds.length === 0) {
-    return [];
-  }
-
-  // Step 3: Fetch only event_id from attendance
-  const { data: attRows, error: attError } = await supabase
-    .from("attendance")
-    .select("event_id")
-    .in("event_id", eventIds);
-
-  if (attError || !attRows) {
-    return events.map((e: any) => ({
-      eventId: e.id,
-      eventCode: e.event_code,
-      title: e.title,
-      attendeeCount: 0,
-    }));
-  }
-
-  // Step 4: Count attendance rows per event
-  const counts: Record<string, number> = {};
-
-  attRows.forEach((r: any) => {
-    counts[r.event_id] = (counts[r.event_id] ?? 0) + 1;
-  });
-
-  // Step 5: Build the summary
-  return events.map((e: any) => ({
-    eventId: e.id,
-    eventCode: e.event_code,
-    title: e.title,
-    attendeeCount: counts[e.id] ?? 0,
-  }));
 }
