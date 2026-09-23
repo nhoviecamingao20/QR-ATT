@@ -13,22 +13,22 @@ import { useAuth } from "@/lib/auth";
 import { getProfile, type Role } from "@/lib/profiles";
 
 export default function HistoryScreen() {
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   const [role, setRole] = useState<Role | null>(null);
+
   const [studentRecords, setStudentRecords] = useState<AttendanceRecord[]>([]);
+
   const [teacherEvents, setTeacherEvents] = useState<TeacherEventAttendance[]>(
     [],
   );
-  const [loading, setLoading] = useState(true);
 
-  const loadHistory = useCallback(async () => {
+  const load = useCallback(async () => {
     if (!user) {
       setLoading(false);
       return;
     }
-
-    setLoading(true);
 
     const profile = await getProfile(user.id);
     const currentRole = profile?.role ?? "student";
@@ -52,10 +52,13 @@ export default function HistoryScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadHistory();
-    }, [loadHistory]),
+      load();
+    }, [load]),
   );
 
+  /*
+   * TEACHER HISTORY
+   */
   if (role === "teacher") {
     return (
       <View style={styles.container}>
@@ -64,50 +67,56 @@ export default function HistoryScreen() {
         {loading ? (
           <Text style={styles.subtitle}>Loading records...</Text>
         ) : teacherEvents.length === 0 ? (
-          <Text style={styles.subtitle}>
-            No events yet. Create an event to see attendance here.
-          </Text>
+          <Text style={styles.subtitle}>No events created yet.</Text>
         ) : (
           <FlatList
             data={teacherEvents}
             keyExtractor={(item) => item.eventId}
             contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <View style={styles.card}>
-                <View style={styles.eventHeader}>
-                  <Text style={styles.eventTitle}>{item.title}</Text>
+                {/* EVENT DETAILS + ATTENDEE COUNT */}
+                <View style={styles.cardTop}>
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle}>{item.title}</Text>
 
-                  <View style={styles.countBadge}>
-                    <Text style={styles.countText}>{item.attendeeCount}</Text>
+                    <Text style={styles.eventMeta}>
+                      Event Code: {item.eventCode}
+                    </Text>
+
+                    <Text style={styles.eventMeta}>
+                      Start:{" "}
+                      {item.startTime ? formatDate(item.startTime) : "N/A"}
+                    </Text>
+
+                    <Text style={styles.eventMeta}>
+                      End: {item.endTime ? formatDate(item.endTime) : "N/A"}
+                    </Text>
+                  </View>
+
+                  {/* ATTENDEE COUNT */}
+                  <View style={styles.attendeeBadge}>
+                    <Text style={styles.attendeeLabel}>Attendees</Text>
+
+                    <Text style={styles.attendeeCount}>
+                      {item.attendeeCount}
+                    </Text>
                   </View>
                 </View>
 
-                <Text style={styles.eventMeta}>{item.eventCode}</Text>
-
-                {item.startTime && (
-                  <Text style={styles.eventMeta}>
-                    Start: {formatDate(item.startTime)}
-                  </Text>
-                )}
-
-                {item.attendees.length === 0 ? (
-                  <Text style={styles.noAttendees}>
-                    No students have scanned this event yet.
-                  </Text>
-                ) : (
+                {/* ATTENDEE NAMES */}
+                {item.attendees.length > 0 && (
                   <View style={styles.attendeeList}>
+                    <Text style={styles.attendeeListTitle}>Attendees:</Text>
+
                     {item.attendees.map((attendee) => (
-                      <View
-                        key={`${attendee.studentId}-${attendee.scannedAt}`}
-                        style={styles.attendeeRow}
+                      <Text
+                        key={`${item.eventId}-${attendee.studentId}`}
+                        style={styles.attendeeName}
                       >
-                        <Text style={styles.studentId}>
-  {attendee.studentName || shortId(attendee.studentId)}
-</Text>
-                        <Text style={styles.scanTime}>
-                          {formatDate(attendee.scannedAt)}
-                        </Text>
-                      </View>
+                        • {attendee.studentName ?? "Unknown student"}
+                      </Text>
                     ))}
                   </View>
                 )}
@@ -119,6 +128,9 @@ export default function HistoryScreen() {
     );
   }
 
+  /*
+   * STUDENT HISTORY
+   */
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Attendance History</Text>
@@ -134,6 +146,7 @@ export default function HistoryScreen() {
           data={studentRecords}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Text style={styles.eventTitle}>{item.eventTitle}</Text>
@@ -147,10 +160,6 @@ export default function HistoryScreen() {
       )}
     </View>
   );
-}
-
-function shortId(id: string) {
-  return id ? `…${id.slice(-8)}` : "unknown";
 }
 
 function formatDate(iso: string) {
@@ -189,26 +198,36 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
+
     shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
 
-  eventHeader: {
+  /*
+   * EVENT DETAILS + COUNT
+   */
+  cardTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 4,
+  },
+
+  eventInfo: {
+    flex: 1,
+    paddingRight: 16,
   },
 
   eventTitle: {
-    flex: 1,
     fontSize: 16,
     fontWeight: "600",
     color: COLORS.textPrimary,
-    marginRight: 12,
+    marginBottom: 4,
   },
 
   eventMeta: {
@@ -217,57 +236,51 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  countBadge: {
-    minWidth: 32,
-    height: 28,
+  /*
+   * ATTENDEE COUNT
+   */
+  attendeeBadge: {
+    minWidth: 82,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 14,
-    backgroundColor: "#2E7D32",
+    backgroundColor: COLORS.surface,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
   },
 
-  countText: {
-    fontSize: 13,
+  attendeeLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
+  },
+
+  attendeeCount: {
+    fontSize: 20,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: COLORS.primary,
   },
 
+  /*
+   * ATTENDEE NAMES
+   */
   attendeeList: {
-    marginTop: 14,
+    marginTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
-    paddingTop: 10,
   },
 
-  attendeeRow: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-
-  studentId: {
+  attendeeListTitle: {
     fontSize: 13,
     fontWeight: "600",
     color: COLORS.textPrimary,
+    marginBottom: 4,
   },
 
-  studentIdSecondary: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-
-  scanTime: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-
-  noAttendees: {
+  attendeeName: {
     fontSize: 13,
     color: COLORS.textSecondary,
-    marginTop: 14,
-    fontStyle: "italic",
+    marginTop: 3,
   },
 });

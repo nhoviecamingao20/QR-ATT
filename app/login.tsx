@@ -22,7 +22,6 @@ import { signIn } from "@/lib/auth";
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +32,7 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const { error: authError } = await signIn(email.trim(), password);
+      const { data, error: authError } = await signIn(email.trim(), password);
 
       if (authError) {
         setError(authError.message);
@@ -65,14 +64,12 @@ export default function LoginScreen() {
             </View>
 
             <Text style={styles.title}>Welcome Back</Text>
-
             <Text style={styles.subtitle}>
               Sign in to record your attendance
             </Text>
 
             <View style={styles.form}>
               <Text style={styles.label}>Email</Text>
-
               <TextInput
                 style={styles.input}
                 value={email}
@@ -85,7 +82,6 @@ export default function LoginScreen() {
               />
 
               <Text style={styles.label}>Password</Text>
-
               <TextInput
                 style={styles.input}
                 value={password}
@@ -98,6 +94,7 @@ export default function LoginScreen() {
 
               {error && <Text style={styles.error}>{error}</Text>}
 
+              <Text></Text>
               {loading ? (
                 <ActivityIndicator
                   size="large"
@@ -114,7 +111,7 @@ export default function LoginScreen() {
               )}
             </View>
 
-            <Link href="./register" style={styles.link}>
+            <Link href="/register" style={styles.link}>
               Don't have an account? Sign Up
             </Link>
           </ScrollView>

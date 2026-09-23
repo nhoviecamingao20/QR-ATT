@@ -11,26 +11,22 @@ type Props = {
   disabled?: boolean;
 };
 
-export default function AppButton({
-  title,
-  icon,
-  theme,
-  onPress,
-  disabled = false,
-}: Props) {
+export default function AppButton({ title, icon, theme, onPress }: Props) {
   if (theme === "primary") {
     return (
       <View
         style={[
           styles.buttonOuter,
-          styles.primaryOuter,
-          disabled && styles.disabled,
+          {
+            borderWidth: 1,
+            borderColor: COLORS.primary,
+            borderRadius: 10,
+          },
         ]}
       >
         <Pressable
-          style={styles.primaryInner}
+          style={[styles.buttonInner, { backgroundColor: COLORS.primary }]}
           onPress={onPress}
-          disabled={disabled}
         >
           <Ionicons
             name={icon}
@@ -38,27 +34,31 @@ export default function AppButton({
             color={COLORS.textOnPrimary}
             style={styles.icon}
           />
-
-          <Text style={styles.primaryLabel}>{title}</Text>
+          <Text
+            style={[
+              styles.label,
+              {
+                color: COLORS.textOnPrimary,
+                fontWeight: "700",
+              },
+            ]}
+          >
+            {title}
+          </Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View style={[styles.buttonOuter, disabled && styles.disabled]}>
-      <Pressable
-        style={styles.buttonInner}
-        onPress={onPress}
-        disabled={disabled}
-      >
+    <View style={styles.buttonOuter}>
+      <Pressable style={styles.buttonInner} onPress={onPress}>
         <Ionicons
           name={icon}
           size={22}
           color={COLORS.textSecondary}
           style={styles.icon}
         />
-
         <Text style={styles.label}>{title}</Text>
       </Pressable>
     </View>
@@ -69,23 +69,6 @@ const styles = StyleSheet.create({
   buttonOuter: {
     width: "100%",
     marginBottom: 14,
-  },
-
-  primaryOuter: {
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-
-  primaryInner: {
-    borderRadius: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    backgroundColor: COLORS.primary,
   },
 
   buttonInner: {
@@ -101,22 +84,12 @@ const styles = StyleSheet.create({
   },
 
   icon: {
-    marginRight: 10,
+    paddingRight: 10,
   },
 
   label: {
     fontSize: 17,
     fontWeight: "600",
     color: COLORS.textPrimary,
-  },
-
-  primaryLabel: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: COLORS.textOnPrimary,
-  },
-
-  disabled: {
-    opacity: 0.5,
   },
 });

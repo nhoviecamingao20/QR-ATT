@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   Platform,
@@ -63,18 +63,12 @@ export default function TeacherScreen() {
   const [payload, setPayload] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const isAndroid = Platform.OS === "android";
-
   useFocusEffect(
     useCallback(() => {
       let active = true;
 
-      setRoleLoading(true);
-
       if (!user) {
-        setRole(null);
         setRoleLoading(false);
-
         return () => {
           active = false;
         };
@@ -82,7 +76,6 @@ export default function TeacherScreen() {
 
       getProfile(user.id).then((profile) => {
         if (!active) return;
-
         setRole(profile?.role ?? "student");
         setRoleLoading(false);
       });
@@ -95,31 +88,25 @@ export default function TeacherScreen() {
 
   if (roleLoading) {
     return (
-      <View style={styles.centeredContainer}>
-        <ActivityChecking />
+      <View style={styles.lockContainer}>
+        <Text style={styles.lockTitle}>Checking your account...</Text>
       </View>
     );
   }
 
   if (role !== "teacher") {
     return (
-      <View style={styles.centeredContainer}>
-        <View style={styles.lockIcon}>
-          <Ionicons
-            name="lock-closed-outline"
-            size={40}
-            color={COLORS.primary}
-          />
-        </View>
-
+      <View style={styles.lockContainer}>
+        <Ionicons name="lock-closed-outline" size={48} color={COLORS.primary} />
         <Text style={styles.lockTitle}>Teachers Only</Text>
-
         <Text style={styles.lockSubtitle}>
           Only teacher accounts can create events.
         </Text>
       </View>
     );
   }
+
+  const isAndroid = Platform.OS === "android";
 
   const openPicker = (target: EditTarget) => {
     setMessage(null);
@@ -191,7 +178,6 @@ export default function TeacherScreen() {
       }
 
       setMessage("Event saved! Scan the QR with the Scan tab to test it.");
-
       setPayload(buildQRPayload(eventData));
     });
   };
@@ -203,13 +189,11 @@ export default function TeacherScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <Text style={styles.title}>Create Event QR</Text>
-
       <Text style={styles.subtitle}>
         Fill in the event details, then scan the generated QR with the Scan tab.
       </Text>
 
       <Text style={styles.label}>Event Title</Text>
-
       <TextInput
         style={styles.input}
         value={title}
@@ -219,7 +203,6 @@ export default function TeacherScreen() {
       />
 
       <Text style={styles.label}>Event Code</Text>
-
       <TextInput
         style={styles.input}
         value={eventId}
@@ -230,7 +213,6 @@ export default function TeacherScreen() {
       />
 
       <Text style={styles.label}>Starts</Text>
-
       <PickerField
         value={formatDateTime(startDate)}
         icon="sunny-outline"
@@ -238,7 +220,6 @@ export default function TeacherScreen() {
       />
 
       <Text style={styles.label}>Ends</Text>
-
       <PickerField
         value={formatDateTime(endDate)}
         icon="moon-outline"
@@ -298,20 +279,6 @@ export default function TeacherScreen() {
   );
 }
 
-function ActivityChecking() {
-  return (
-    <View style={styles.checkingContent}>
-      <Ionicons
-        name="shield-checkmark-outline"
-        size={32}
-        color={COLORS.primary}
-      />
-
-      <Text style={styles.checkingText}>Checking your account...</Text>
-    </View>
-  );
-}
-
 type PickerFieldProps = {
   value: string;
   icon: keyof typeof Ionicons.glyphMap;
@@ -328,9 +295,7 @@ function PickerField({ value, icon, onPress }: PickerFieldProps) {
       onPress={onPress}
     >
       <Ionicons name={icon} size={20} color={COLORS.primary} />
-
       <Text style={styles.pickerValue}>{value}</Text>
-
       <Ionicons
         name="calendar-outline"
         size={18}
@@ -345,71 +310,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
   content: {
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 40,
   },
-
-  centeredContainer: {
+  lockContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
   },
-
-  checkingContent: {
-    alignItems: "center",
-  },
-
-  checkingText: {
-    marginTop: 12,
-    fontSize: 15,
-    color: COLORS.textSecondary,
-  },
-
-  lockIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-
   lockTitle: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "600",
     color: COLORS.textPrimary,
-    marginBottom: 6,
-  },
-
-  lockSubtitle: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: COLORS.textSecondary,
+    marginTop: 12,
     textAlign: "center",
   },
-
+  lockSubtitle: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+    marginTop: 6,
+    textAlign: "center",
+  },
   title: {
     fontSize: 20,
     fontWeight: "600",
     color: COLORS.textPrimary,
     marginBottom: 4,
   },
-
   subtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,
     lineHeight: 20,
     marginBottom: 16,
   },
-
   label: {
     fontSize: 14,
     fontWeight: "600",
@@ -417,10 +355,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 10,
   },
-
   input: {
     backgroundColor: COLORS.card,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: 14,
@@ -428,10 +365,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.textPrimary,
   },
-
   pickerField: {
     backgroundColor: COLORS.card,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
     paddingHorizontal: 14,
@@ -439,11 +375,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-
   pickerFieldPressed: {
     backgroundColor: COLORS.surface,
   },
-
   pickerValue: {
     flex: 1,
     fontSize: 15,
@@ -451,12 +385,10 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginHorizontal: 10,
   },
-
   chipRow: {
     flexDirection: "row",
     marginTop: 8,
   },
-
   chip: {
     backgroundColor: COLORS.surface,
     borderRadius: 999,
@@ -464,41 +396,38 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     marginRight: 8,
   },
-
   chipText: {
     fontSize: 13,
     fontWeight: "600",
     color: COLORS.primary,
   },
-
   hint: {
     fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 6,
   },
-
   pickerContainer: {
     marginTop: 12,
     alignItems: "center",
   },
-
   message: {
     fontSize: 14,
     color: COLORS.primary,
     textAlign: "center",
     marginTop: 12,
   },
-
   resultCard: {
     backgroundColor: COLORS.card,
-    borderRadius: 10,
+    borderRadius: 14,
     padding: 16,
     marginTop: 20,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-
   resultTitle: {
     fontSize: 15,
     fontWeight: "600",
@@ -506,14 +435,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 12,
   },
-
   qrBox: {
     backgroundColor: "#FFFFFF",
     padding: 12,
     borderRadius: 10,
     marginBottom: 12,
   },
-
   payloadText: {
     fontSize: 12,
     color: COLORS.textSecondary,

@@ -10,24 +10,14 @@ type AuthState = {
 
 let globalSession: Session | null = null;
 let globalUser: User | null = null;
-let globalLoading = true;
-
+let globalLoading = false;
 let listeners: Set<() => void> = new Set();
 
 function notify() {
-  listeners.forEach((listener) => listener());
+  listeners.forEach((l) => l());
 }
 
-// Initialize the current Supabase session when the app starts
-supabase.auth.getSession().then(({ data }) => {
-  setAuth(data.session);
-});
-
-supabase.auth.onAuthStateChange((_event, session) => {
-  setAuth(session);
-});
-
-function setAuth(session: Session | null) {
+export function setAuth(session: Session | null) {
   globalSession = session;
   globalUser = session?.user ?? null;
   globalLoading = false;
@@ -39,9 +29,7 @@ export function useAuth(): AuthState {
 
   useEffect(() => {
     const listener = () => forceRender((n) => n + 1);
-
     listeners.add(listener);
-
     return () => {
       listeners.delete(listener);
     };
@@ -91,18 +79,14 @@ export async function signIn(email: string, password: string) {
     email,
     password,
   });
-
   if (!error && data.session) {
     setAuth(data.session);
   }
-
   return { data, error };
 }
 
 export async function signOut() {
   setAuth(null);
-
   supabase.auth.signOut().catch(() => {});
-
   return { error: null };
 }

@@ -16,7 +16,6 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: COLORS.card,
           borderTopColor: COLORS.border,
-          borderTopWidth: 1,
         },
       }}
     >
@@ -33,6 +32,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="scan"
         options={{
@@ -46,6 +46,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="history"
         options={{
@@ -59,6 +60,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="profile"
         options={{
@@ -72,13 +74,14 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="teacher"
         options={{
           title: "Teacher",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "school" : "school-outline"}
+              name={focused ? "clipboard" : "clipboard-outline"}
               color={color}
               size={24}
             />

@@ -32,7 +32,5 @@ export async function updateProfile(
     .update(updates)
     .eq("id", userId);
 
-  return {
-    error: error?.message ?? null,
-  };
+  return { error: error?.message ?? null };
 }

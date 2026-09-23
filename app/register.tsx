@@ -1,15 +1,15 @@
-import { Link, useRouter } from "expo-router";
+import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
@@ -22,21 +22,19 @@ import { signUp } from "@/lib/auth";
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<"student" | "teacher">("student");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<"student" | "teacher">("student");
 
   const handleRegister = async () => {
     setError(null);
 
-    if (!fullName.trim() || !email.trim() || !password || !confirmPassword) {
+    if (!email.trim() || !password || !confirmPassword) {
       setError("All fields are required.");
       return;
     }
@@ -66,7 +64,7 @@ export default function RegisterScreen() {
       } else {
         setSuccess(true);
       }
-    } catch {
+    } catch (err) {
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -91,7 +89,6 @@ export default function RegisterScreen() {
             </View>
 
             <Text style={styles.title}>Create Account</Text>
-
             <Text style={styles.subtitle}>
               Register to start recording attendance
             </Text>
@@ -99,32 +96,27 @@ export default function RegisterScreen() {
             {success ? (
               <View style={styles.successContainer}>
                 <Text style={styles.successTitle}>Check your email!</Text>
-
                 <Text style={styles.successText}>
                   We sent a confirmation link to {email}. Click the link to
                   verify your account, then come back and sign in.
                 </Text>
-
-                <Link href="./login" style={styles.link}>
+                <Link href="/login" style={styles.link}>
                   Back to Sign In
                 </Link>
               </View>
             ) : (
               <View style={styles.form}>
                 <Text style={styles.label}>Full Name</Text>
-
                 <TextInput
                   style={styles.input}
                   value={fullName}
                   onChangeText={setFullName}
-                  placeholder="Enter your full name"
+                  placeholder="Your full name"
                   placeholderTextColor={COLORS.textSecondary}
-                  autoCapitalize="words"
                   editable={!loading}
                 />
 
                 <Text style={styles.label}>Email</Text>
-
                 <TextInput
                   style={styles.input}
                   value={email}
@@ -137,7 +129,6 @@ export default function RegisterScreen() {
                 />
 
                 <Text style={styles.label}>Password</Text>
-
                 <TextInput
                   style={styles.input}
                   value={password}
@@ -149,7 +140,6 @@ export default function RegisterScreen() {
                 />
 
                 <Text style={styles.label}>Confirm Password</Text>
-
                 <TextInput
                   style={styles.input}
                   value={confirmPassword}
@@ -160,46 +150,42 @@ export default function RegisterScreen() {
                   editable={!loading}
                 />
 
-                <Text style={styles.label}>Role</Text>
+                <Text style={styles.label}>I am registering as a</Text>
 
-                <View style={styles.roleContainer}>
-                  <TouchableOpacity
+                <View style={styles.roleRow}>
+                  <Pressable
                     style={[
-                      styles.roleButton,
-                      role === "student" && styles.selectedRoleButton,
+                      styles.roleChip,
+                      role === "student" && styles.roleChipActive,
                     ]}
                     onPress={() => setRole("student")}
-                    activeOpacity={0.8}
-                    disabled={loading}
                   >
                     <Text
                       style={[
-                        styles.roleButtonText,
-                        role === "student" && styles.selectedRoleButtonText,
+                        styles.roleChipText,
+                        role === "student" && styles.roleChipTextActive,
                       ]}
                     >
                       Student
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
 
-                  <TouchableOpacity
+                  <Pressable
                     style={[
-                      styles.roleButton,
-                      role === "teacher" && styles.selectedRoleButton,
+                      styles.roleChip,
+                      role === "teacher" && styles.roleChipActive,
                     ]}
                     onPress={() => setRole("teacher")}
-                    activeOpacity={0.8}
-                    disabled={loading}
                   >
                     <Text
                       style={[
-                        styles.roleButtonText,
-                        role === "teacher" && styles.selectedRoleButtonText,
+                        styles.roleChipText,
+                        role === "teacher" && styles.roleChipTextActive,
                       ]}
                     >
                       Teacher
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
 
                 {error && <Text style={styles.error}>{error}</Text>}
@@ -222,7 +208,7 @@ export default function RegisterScreen() {
             )}
 
             {!success && (
-              <Link href="./login" style={styles.link}>
+              <Link href="/login" style={styles.link}>
                 Already have an account? Sign In
               </Link>
             )}
@@ -294,39 +280,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
 
-  roleContainer: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 4,
-  },
-
-  roleButton: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 13,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  selectedRoleButton: {
-    backgroundColor: COLORS.primary + "14",
-    borderColor: COLORS.primary,
-  },
-
-  roleButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.textPrimary,
-  },
-
-  selectedRoleButtonText: {
-    fontWeight: "700",
-    color: COLORS.primary,
-  },
-
   error: {
     fontSize: 14,
     color: COLORS.danger,
@@ -351,9 +304,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 20,
     backgroundColor: COLORS.card,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderRadius: 14,
   },
 
   successTitle: {
@@ -369,5 +320,36 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     marginBottom: 16,
+  },
+
+  roleRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
+
+  roleChip: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 10,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.card,
+  },
+
+  roleChipActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + "14",
+  },
+
+  roleChipText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+  },
+
+  roleChipTextActive: {
+    color: COLORS.primary,
+    fontWeight: "700",
   },
 });

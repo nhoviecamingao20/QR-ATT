@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 
 export type Event = {
-  eventId: string;
+  eventId: string; // the public event code (from the UI, e.g. EVT-2026-0002)
   title: string;
   start: string;
   end: string;
